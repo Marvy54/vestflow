@@ -11,6 +11,7 @@ import {
   isDraftEmpty,
 } from "@/lib/giveDraft";
 import BulkGiveForm from "@/components/BulkGiveForm";
+import MultiGiveForm from "@/components/MultiGiveForm";
 
 interface GiveModalProps {
   open: boolean;
@@ -20,7 +21,7 @@ interface GiveModalProps {
 
 export default function GiveModal({ open, onClose, onSuccess }: GiveModalProps) {
   const { publicKey } = useWallet();
-  const [mode, setMode] = useState<"single" | "bulk">("single");
+  const [mode, setMode] = useState<"single" | "multi" | "bulk">("single");
   const [amount, setAmount] = useState("");
   const [recipient, setRecipient] = useState("");
   const [loading, setLoading] = useState(false);
@@ -139,14 +140,16 @@ export default function GiveModal({ open, onClose, onSuccess }: GiveModalProps) 
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
     >
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className={`relative z-10 w-full ${mode === "bulk" ? "max-w-xl" : "max-w-md"} rounded-2xl border border-white/10 bg-zinc-900 p-6 shadow-2xl transition-all`}>
+      <div className={`relative z-10 w-full ${mode === "single" ? "max-w-md" : "max-w-2xl"} rounded-2xl border border-white/10 bg-zinc-900 p-6 shadow-2xl transition-all`}>
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-lg font-bold">Give Tokens</h2>
             <p className="text-sm text-zinc-400">
               {mode === "bulk"
                 ? "Upload CSV to send tokens to multiple addresses at once"
-                : "Send vested tokens to another address"}
+                : mode === "multi"
+                  ? "Give different tokens to different receivers in one session"
+                  : "Send vested tokens to another address"}
             </p>
           </div>
           <button onClick={onClose} className="flex items-center justify-center text-zinc-500 hover:text-zinc-300 transition-colors shrink-0 min-h-[44px] min-w-[44px] -mr-2" aria-label="Close">
@@ -154,34 +157,40 @@ export default function GiveModal({ open, onClose, onSuccess }: GiveModalProps) 
           </button>
         </div>
 
-        {/* Mode selector (#793) */}
+        {/* Mode selector (#793, #811) */}
         <div className="flex border-b border-white/10 mb-5">
-          <button
-            type="button"
-            onClick={() => setMode("single")}
-            className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition-colors ${
-              mode === "single"
-                ? "border-violet-500 text-violet-300"
-                : "border-transparent text-zinc-400 hover:text-zinc-200"
-            }`}
-          >
-            Single Give
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode("bulk")}
-            className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition-colors ${
-              mode === "bulk"
-                ? "border-violet-500 text-violet-300"
-                : "border-transparent text-zinc-400 hover:text-zinc-200"
-            }`}
-          >
-            Bulk Give (CSV)
-          </button>
+          {(
+            [
+              ["single", "Single Give"],
+              ["multi", "Multi Give"],
+              ["bulk", "Bulk Give (CSV)"],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setMode(value)}
+              className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition-colors ${
+                mode === value
+                  ? "border-violet-500 text-violet-300"
+                  : "border-transparent text-zinc-400 hover:text-zinc-200"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
 
         {mode === "bulk" ? (
           <BulkGiveForm
+            onSuccess={() => {
+              onSuccess();
+              onClose();
+            }}
+            onCancel={onClose}
+          />
+        ) : mode === "multi" ? (
+          <MultiGiveForm
             onSuccess={() => {
               onSuccess();
               onClose();
