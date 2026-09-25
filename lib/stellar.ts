@@ -16,7 +16,7 @@ import {
 } from "@stellar/freighter-api";
 import { xlmToStroops } from "@/lib/stroops";
 
-export { xlmToStroops } from "@/lib/stroops";
+export { xlmToStroops, tokenAmountToBaseUnits } from "@/lib/stroops";
 
 export const NETWORK = process.env.NEXT_PUBLIC_NETWORK === "mainnet" ? "mainnet" : "testnet";
 export const NETWORK_PASSPHRASE = NETWORK === "mainnet" ? Networks.PUBLIC : Networks.TESTNET;
